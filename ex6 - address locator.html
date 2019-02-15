@@ -1,0 +1,100 @@
+<!-- SearchAPI: Geocoding -->
+<!-- https://developer.tomtom.com/content/search-api-explorer#/Geocoding/get_search__versionNumber__structuredGeocode__ext_ -->
+<!-- Country code needs to be set in advance -->
+
+<!-- https://developer.tomtom.com/search-api/search-api-documentation-geocoding/structured-geocode -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex6</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - Geocoding</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+               <h3 class="panel-title">Address Locator</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1">
+                  <span class="glyphicon glyphicon-map-marker" aria-hidden="true">
+                  </span>
+                </span>
+                <input type="text" class="form-control" placeholder="Wall Street, New York" aria-describedby="basic-addon1" id="searchbar">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="search-title"></h4>
+          <p id="search-status">
+            Address map will appear here...
+          </p>
+
+          <img id="map-img">
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $("#searchbar").keypress(function(event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+
+        if(keycode == '13') {
+          query = $(this).val();
+          $("#search-title").html("Results for '" + query + "'");
+
+          $("#search-status").html("Please wait while the address map loads...");
+          $(this).val("");
+
+          var url = "https://api.tomtom.com/search/2/structuredGeocode.json?countryCode=USA&municipality={query}&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+          url = url.replace("{query}", query);
+
+          $.ajax({
+            type: "GET",
+            url: url,
+            success: function (data) {
+              var lat = data.results[0].position.lat;
+              var lon = data.results[0].position.lon;
+
+              var img_url = "https://api.tomtom.com/map/1/staticimage?layer=basic&style=main&format=png&zoom=9&center={lon},{lat}&width=512&height=512&view=IN&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+              img_url = img_url.replace("{lat}", lat);
+              img_url = img_url.replace("{lon}", lon);
+
+              $.ajax({
+                url: img_url,
+                cache:false,
+                xhr:function() {
+                  var xhr = new XMLHttpRequest();
+                  xhr.responseType= "blob"
+                  return xhr;
+                },
+                success: function(data) {
+                  $("#search-status").html("");
+                  var img = document.getElementById("map-img");
+                  var url = window.URL || window.webkitURL;
+                  img.src = url.createObjectURL(data);
+                },
+                error:function() {
+                  alert("Could not load image!");
+                }
+              });
+            },
+            dataType: "json"
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

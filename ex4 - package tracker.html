@@ -1,0 +1,109 @@
+<!-- Search API: Reverse Geocoding -->
+<!-- https://developer.tomtom.com/content/search-api-explorer#/Reverse_Geocoding/get_search__versionNumber__reverseGeocode__position___ext_ -->
+<!-- https://developer.tomtom.com/search-api/search-api-documentation-reverse-geocoding/reverse-geocode -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex4</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - Package Tracker</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-10">
+               <h3 class="panel-title">Package Viewer</h3>
+            </div>
+            <div class="col-md-2">
+              <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="fleet-selector">
+                  Choose Package <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="trig" href="#" data-lat="37.3349288" data-lon="-122.011142">
+                      Package 1
+                    </a>
+                  </li>
+                  <li>
+                    <a class="trig" href="#" data-lat="37.4220041" data-lon="-122.0862462">
+                      Package 2
+                    </a>
+                  </li>
+                  <li>
+                    <a class="trig" href="#" data-lat="13.0872122" data-lon="80.1978243">
+                      Package 3
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="map-title"></h4>
+          <p id="map-status">
+            Package location map and address will appear here...
+          </p>
+          <img id="map-img">
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $(".trig").on("click", function(event) {
+        event.preventDefault();
+
+        $("#map-title").html($(this).html());
+
+        $("#map-status").html("Please wait while map loads...");
+
+        var lat = $(this).data('lat');
+        var lon = $(this).data('lon');
+
+        var url = "https://api.tomtom.com/map/1/staticimage?layer=basic&style=main&format=png&zoom=9&center={lon},{lat}&width=512&height=512&view=IN&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+        url = url.replace("{lat}", lat);
+        url = url.replace("{lon}", lon);
+
+        $.ajax({
+          url: url,
+          cache:false,
+          xhr:function() {
+            var xhr = new XMLHttpRequest();
+            xhr.responseType= "blob"
+            return xhr;
+          },
+          success: function(data) {
+            var img = document.getElementById("map-img");
+            var url = window.URL || window.webkitURL;
+            img.src = url.createObjectURL(data);
+          },
+          error:function() {
+            alert("Could not load image!");
+          }
+        });
+
+        var rgeo_url = "https://api.tomtom.com/search/2/reverseGeocode/{lat},{lon}.json?key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+        rgeo_url = rgeo_url.replace("{lat}", lat);
+        rgeo_url = rgeo_url.replace("{lon}", lon);
+
+        $.ajax({
+          type: "GET",
+          url: rgeo_url,
+          success: function(data) {
+            $("#map-status").html(data.addresses[0].address.freeformAddress);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

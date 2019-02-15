@@ -1,0 +1,95 @@
+<!-- MapsAPI: Static Images -->
+<!-- https://developer.tomtom.com/content/maps-api-explorer#/ -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex1</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - Fleet Locator</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-10">
+               <h3 class="panel-title">Fleet Location Viewer</h3>
+            </div>
+            <div class="col-md-2">
+              <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="fleet-selector">
+                  Choose Fleet <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="trig" href="#" data-coordinates="55.2721877,25.1972018">
+                      Burj Khalifa
+                    </a>
+                  </li>
+                  <li>
+                    <a class="trig" href="#" data-coordinates="-73.9878531,40.7484445">
+                      Empire State Building
+                    </a>
+                  </li>
+                  <li>
+                    <a class="trig" href="#" data-coordinates="151.213108,-33.8567799">
+                      Sydney Opera House
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="map-title"></h4>
+          <p id="map-status">
+            Fleet location map will appear here...
+          </p>
+          <img id="map-img">
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $(".trig").on("click", function(event) {
+        event.preventDefault();
+
+        $("#map-title").html($(this).html());
+
+        $("#map-status").html("Please wait while map loads...");
+
+        var coordinates = $(this).data('coordinates');
+        var url = "https://api.tomtom.com/map/1/staticimage?layer=basic&style=main&format=png&zoom=9&center=<long,lat>&width=512&height=512&view=IN&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+        url = url.replace("<long,lat>", coordinates);
+
+        $.ajax({
+          url: url,
+          cache:false,
+          xhr:function() {
+            var xhr = new XMLHttpRequest();
+            xhr.responseType= "blob"
+            return xhr;
+          },
+          success: function(data) {
+            $("#map-status").html("");
+
+            var img = document.getElementById("map-img");
+            var url = window.URL || window.webkitURL;
+            img.src = url.createObjectURL(data);
+          },
+          error:function() {
+            alert("Could not load image!");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

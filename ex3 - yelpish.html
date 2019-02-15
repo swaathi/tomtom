@@ -1,0 +1,138 @@
+<!-- SearchAPI: Category Search -->
+<!-- Fuzzy search with idxSet set to Geo -->
+
+<!-- Category search with category set to restaurant -->
+<!-- https://developer.tomtom.com/content/search-api-explorer#/Search/get_search__versionNumber__categorySearch__query___ext_ -->
+
+<!-- List of available categories -->
+<!-- https://developer.tomtom.com/search-api/search-api-documentation-search/category-search -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex3</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - Yelpish</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+               <h3 class="panel-title">Yelpish - Kinda like Yelp, but not really</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1">
+                  <span class="glyphicon glyphicon-map-marker" aria-hidden="true">
+                  </span>
+                </span>
+                <input type="text" class="form-control" placeholder="New York" aria-describedby="basic-addon1" id="searchbar">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="search-title"></h4>
+          <p id="search-status">
+            City locations will appear here...
+          </p>
+
+          <div class="list-group" id="search-results">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $("#searchbar").keypress(function(event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+
+        if(keycode == '13') {
+          query = $(this).val();
+          $("#search-title").html("Results for '" + query + "'");
+
+          $("#search-status").html("Please wait while locations load...");
+          $(this).val("");
+
+          var li = '<a href="#" class="list-group-item city-location" data-lat={lat} data-lon={lon}><span class="badge">{country}</span><h4 class="list-group-item-heading">{name}</h4></a>';
+
+          var url = "https://api.tomtom.com/search/2/search/<city-name>.json?extendedPostalCodesFor=Geo&idxSet=Geo&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+          url = url.replace("<city-name>", query);
+
+          $.ajax({
+            type: "GET",
+            url: url,
+            success: function (data) {
+              $("#search-results").html("")
+              $.each(data.results, function(i, item) {
+                var new_li = li.replace(
+                  "{name}",
+                  item.address.freeformAddress
+                );
+
+                new_li = new_li.replace(
+                  "{country}",
+                  item.address.countryCodeISO3
+                );
+
+                new_li = new_li.replace(
+                  "{lat}",
+                  item.position.lat
+                );
+
+                new_li = new_li.replace(
+                  "{lon}",
+                  item.position.lon
+                );
+
+                $("#search-results").append(new_li);
+              });
+
+              $("#search-status").html("");
+            },
+            dataType: "json"
+          });
+        }
+      });
+
+      $("#search-results").on('click', '.city-location', function(event) {
+        event.preventDefault();
+
+        var lat = $(this).data('lat');
+        var lon = $(this).data('lon');
+
+        $(this).append('<ul class="list-group">Loading restaurants...</ul>');
+        var ul = $(this).find("ul.list-group");
+
+        var url = "https://api.tomtom.com/search/2/categorySearch/restaurant.json?lat={lat}&lon={lon}&extendedPostalCodesFor=POI&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+        url = url.replace("{lat}", lat);
+        url = url.replace("{lon}", lon);
+
+        $.ajax({
+          type: "GET",
+          url: url,
+          success: function (data) {
+            ul.html("");
+
+            $.each(data.results, function(i, item) {
+              var dom = '<li class="list-group-item"><b>{name}</b> - {address}</li>';
+              dom = dom.replace("{name}", item.poi.name);
+              dom = dom.replace("{address}", item.address.freeformAddress);
+
+              ul.append(dom);
+            });
+          },
+          dataType: "json"
+        });
+      });
+    </script>
+  </body>
+</html>

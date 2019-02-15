@@ -1,0 +1,150 @@
+<!-- Traffic Viewer -->
+<!-- Chooses the best route according to time, distance or traffic. -->
+
+<!DOCTYPE html>
+<html class='use-all-space'>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta charset='UTF-8'>
+    <title>TomTom MapsAPI Ex9</title>
+    <meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+
+    <link rel='stylesheet' type='text/css' href='sdk/map.css'/>
+    <link rel='stylesheet' type='text/css' href='elements.css'/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+    <style>
+      label {
+        display: flex;
+        align-items: center;
+        margin: 2px;
+      }
+      select {
+        flex: auto;
+        margin-left: 10px;
+      }
+    </style>
+
+    <script type='text/javascript' src='js/form.js'></script>
+    <script type='text/javascript' src='sdk/tomtom.min.js'></script>
+  </head>
+  <body class='use-all-space'>
+    <div class="container">
+      <h1>TomTom MapsAPI - Traffic Viewer</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+              <h3 class="panel-title">Location Selector</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="btn-group">
+                <select class="form-control" id="location">
+                  <option data-lat="25.0757073" data-lon="54.947557">
+                    Dubai
+                  </option>
+                  <option data-lat="40.6976701" data-lon="-74.2598648">
+                    New York
+                  </option>
+                  <option data-lat="-33.8473567" data-lon="150.6517917">
+                    Sydney
+                  </option>
+                  <option data-lat="48.8589507" data-lon="2.2770203">
+                    Paris
+                  </option>
+                  <option data-lat="13.0478223" data-lon="80.068926">
+                    Chennai
+                  </option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success btn-default" id="fetch">
+                Fetch!
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id='map' class='use-all-space'></div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script>
+      tomtom.setProductInfo('Fixate', '1');
+      tomtom.routingKey('dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua');
+      tomtom.searchKey('dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua');
+
+      var iconOptions = {
+        background: {
+          icon: 'fa fa-car fa-lg',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+          style: {color: '#111'},
+          noPlainSVG: true
+        },
+        icon: null,
+        popupAnchor: [0, -5]
+      };
+
+      var map = tomtom.map('map', {
+        key: 'dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua',
+        zoom: 12,
+        source: 'vector',
+        traffic: {
+          style: 'night',
+          pointToLayer: myTrafficIncidentsPointToLayer,
+          diff: true,
+          key: 'dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua'
+        },
+        basePath: '/sdk'
+      });
+
+      $("#fetch").on("click", function(event) {
+        event.preventDefault();
+
+        var source = $("#location").find('option:selected');
+        var s_lat = source.data('lat');
+        var s_lon = source.data('lon');
+
+        map.setView(
+          {lat: s_lat, lng: s_lon},
+          12
+        );
+      });
+
+      map.zoomControl.setPosition('bottomleft');
+
+      function handleError(err) {
+        console.log(err);
+      }
+
+      function popupText(properites) {
+        return '<h4>' + properites.incidentCategory + '</h4>' +
+            properites.from + '<br/>' + properites.to;
+      }
+
+      function centerOnMarker(trafficIncidentsLayer) {
+        trafficIncidentsLayer.on('click', function(event) {
+          var marker = event.propagatedFrom;
+          map.setView(marker.getLatLng(), map.getZoom());
+        });
+      }
+
+      function myTrafficIncidentsPointToLayer(feature, latlng) {
+        var marker = tomtom.L.marker(latlng, {icon: tomtom.L.svgIcon(iconOptions)});
+        marker.bindPopup(popupText(feature.properties));
+        return marker;
+      }
+
+      var layers = L.MapUtils.findLayersByName('trafficIncidents', map);
+      if (layers.length) {
+        centerOnMarker(layers[0]);
+      }
+    </script>
+  </body>
+</html>

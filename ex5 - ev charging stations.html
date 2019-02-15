@@ -1,0 +1,144 @@
+<!-- Search API: Along Route Search -->
+<!-- https://developer.tomtom.com/content/search-api-explorer#/Search/post_search__versionNumber__searchAlongRoute__query___ext_ -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex5</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - EV Charging Stations</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+              <h3 class="panel-title">EV Charging Station Finder</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="btn-group">
+                <select class="form-control" id="starting">
+                  <option data-lat="37.4551064" data-lon="-122.2131182">
+                    Home
+                  </option>
+                  <option data-lat="37.3349288" data-lon="-122.011142">
+                    Apple Park
+                  </option>
+                  <option data-lat="37.4220041" data-lon="-122.0862462">
+                    Google HQ
+                  </option>
+                  <option data-lat="37.4846144" data-lon="-122.1516928">
+                    Facebook HQ
+                  </option>
+                </select>
+              </div>
+              <div class="btn-group">
+                <select class="form-control" id="destination">
+                   <option data-lat="37.4846144" data-lon="-122.1516928">
+                     Facebook HQ
+                   </option>
+                   <option data-lat="37.4220041" data-lon="-122.0862462">
+                     Google HQ
+                   </option>
+                   <option data-lat="37.3349288" data-lon="-122.011142">
+                     Apple Park
+                   </option>
+                   <option data-lat="37.4551064" data-lon="-122.2131182">
+                     Home
+                   </option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success btn-default" id="ev-station-finder">
+                Find!
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="search-title"></h4>
+          <p id="search-status">
+            EV Charging Station locations will appear here...
+          </p>
+
+          <ul class="list-group" id="search-results">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $("#ev-station-finder").on("click", function(event) {
+        event.preventDefault();
+
+        var source = $("#starting").find('option:selected');
+        var s_lat = source.data('lat');
+        var s_lon = source.data('lon');
+
+        var destination = $("#destination").find('option:selected');
+        var d_lat = destination.data('lat');
+        var d_lon = destination.data('lon');
+
+        $("#search-title").html("Finding EV Charging Stations between " + source.html() + " and " + destination.html());
+
+        $("#search-status").html("Please wait charging stations load...");
+
+        var li = '<li class="list-group-item"><span class="badge">{connector}</span><h4 class="list-group-item-heading">{name}</h4><p class="list-group-item-text">{address}</p></li>';
+
+        var route_params = {
+          route: {
+            points: [
+              {
+                lat: s_lat,
+                lon: s_lon,
+              },
+              {
+                lat: d_lat,
+                lon: d_lon,
+              }
+            ]
+          }
+        }
+
+        $.ajax({
+          url: "https://api.tomtom.com/search/2/searchAlongRoute/electric vehicle station.json?maxDetourTime=1200&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua",
+          type: 'post',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify(route_params),
+          success: function (data) {
+            console.log(data.results);
+            $("#search-results").html("")
+
+            $.each(data.results, function(i, item) {
+              var new_li = li.replace(
+                "{name}",
+                item.poi.name
+              );
+
+              new_li = new_li.replace(
+                "{connector}",
+                item.poi.connector
+              );
+
+              new_li = new_li.replace(
+                "{address}",
+                item.address.freeformAddress
+              );
+
+              $("#search-results").append(new_li);
+            });
+
+            $("#search-status").html("");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

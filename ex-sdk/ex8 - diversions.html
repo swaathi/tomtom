@@ -1,0 +1,223 @@
+<!-- Diversions example -->
+
+<!DOCTYPE html>
+<html class='use-all-space'>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta charset='UTF-8'>
+    <title>TomTom MapsAPI Ex8</title>
+    <meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+
+    <link rel='stylesheet' type='text/css' href='sdk/map.css'/>
+    <link rel='stylesheet' type='text/css' href='elements.css'/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+    <style>
+      label {
+        display: flex;
+        align-items: center;
+        margin: 2px;
+      }
+      select {
+        flex: auto;
+        margin-left: 10px;
+      }
+    </style>
+
+    <script type='text/javascript' src='js/form.js'></script>
+    <script type='text/javascript' src='sdk/tomtom.min.js'></script>
+  </head>
+  <body class='use-all-space'>
+    <div class="container">
+      <h1>TomTom MapsAPI - Router</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+              <h3 class="panel-title">Router</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="btn-group">
+                <select class="form-control" id="starting">
+                  <option data-lat="37.4551064" data-lon="-122.2131182">
+                    Home
+                  </option>
+                  <option data-lat="37.3349288" data-lon="-122.011142">
+                    Apple Park
+                  </option>
+                  <option data-lat="37.4220041" data-lon="-122.0862462">
+                    Google HQ
+                  </option>
+                  <option data-lat="37.4846144" data-lon="-122.1516928">
+                    Facebook HQ
+                  </option>
+                </select>
+              </div>
+              <div class="btn-group">
+                <select class="form-control" id="destination">
+                   <option data-lat="37.4846144" data-lon="-122.1516928">
+                     Facebook HQ
+                   </option>
+                   <option data-lat="37.4220041" data-lon="-122.0862462">
+                     Google HQ
+                   </option>
+                   <option data-lat="37.3349288" data-lon="-122.011142">
+                     Apple Park
+                   </option>
+                   <option data-lat="37.4551064" data-lon="-122.2131182">
+                     Home
+                   </option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success btn-default" id="router-begin">
+                Route!
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-9">
+              <h3 class="panel-title">Diversion</h3>
+            </div>
+            <div class="col-md-3">
+              <div class="btn-group">
+                <select class="form-control" id="stops">
+                  <option data-lat="37.4550364" data-lon="-122.2039376">
+                    Safeway
+                  </option>
+                  <option data-lat="37.4550364" data-lon="-122.2039376">
+                    Target
+                  </option>
+                  <option data-lat="37.4550364" data-lon="-122.2039376">
+                    Trader Joe's
+                  </option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success btn-default" id="add-stop">
+                Add Stop!
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id='map' class='use-all-space'></div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script>
+      tomtom.setProductInfo('Fixate', '1');
+      tomtom.routingKey('dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua');
+      tomtom.searchKey('dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua');
+
+      var map = tomtom.L.map('map', {
+        key: 'dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua',
+        source: 'vector',
+        basePath: '/sdk'
+      });
+
+      map.zoomControl.setPosition('bottomleft');
+
+      var routeOnMapView = tomtom.routeOnMap({
+        startMarker: {
+          icon: tomtom.L.icon({
+            iconUrl: '/sdk/../img/start.png',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        },
+
+        endMarker: {
+          icon: tomtom.L.icon({
+            iconUrl: '/sdk/../img/end.png',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          })
+        }
+      }).addTo(map);
+
+      var routeInputsInstance = tomtom.routeInputs({location: false})
+
+      $("#router-begin").on("click", function(event) {
+        event.preventDefault();
+
+        routeOnMapView.draw(getLocations());
+      });
+
+      $("#add-stop").on("click", function(event) {
+        var stops = $("#stops").find('option:selected');
+        var s_lat = stops.data('lat');
+        var s_lon = stops.data('lon');
+
+        var latlng = {lat: s_lat, lng: s_lon}
+        var marker = new L.marker(latlng, {
+          draggable: true,
+          icon: getIcon()
+        }).addTo(map);
+
+        tomtom.routing()
+          .locations(getLocations())
+          .supportingPoints([latlng])
+          .go()
+          .then(function(routeJson) {
+            routeOnMapView.clearRoute();
+            activeRoute = tomtom.L.geoJson(routeJson, {
+              style: {
+                color: '#00d7ff'
+              }
+            }).addTo(map);
+
+            map.fitBounds(activeRoute.getBounds());
+          }, handleError);
+      });
+
+      function getIcon(big) {
+        return new tomtom.L.SVGIcon({
+          background: {
+            iconSize: big ? [30, 30] : [23, 23],
+            iconAnchor: [10, 15],
+            icon: 'icon-shield',
+            noPlainSVG: false
+          },
+          icon: {
+            iconSize: big ? [30, 30] : [25, 25],
+            iconAnchor: big ? [0, 0] : [1, 1],
+            icon: 'icon-ic_map_poi_998-white',
+            noPlainSVG: false
+          },
+          popupAnchor: [0, -30],
+          opacity: 0.8
+        });
+      }
+
+      function getLocations() {
+        var source = $("#starting").find('option:selected');
+        var s_lat = source.data('lat');
+        var s_lon = source.data('lon');
+
+        var destination = $("#destination").find('option:selected');
+        var d_lat = destination.data('lat');
+        var d_lon = destination.data('lon');
+
+        return ([
+          {lat: s_lat, lng: s_lon},
+          {lat: d_lat, lng: d_lon}
+        ]);
+      }
+
+      function handleError(err) {
+        console.log(err);
+      }
+    </script>
+  </body>
+</html>

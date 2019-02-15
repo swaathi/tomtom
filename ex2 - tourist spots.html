@@ -1,0 +1,99 @@
+<!-- SearchAPI: Fuzzy Search -->
+<!-- https://developer.tomtom.com/content/search-api-explorer#/Search/get_search__versionNumber__search__query___ext_ -->
+<!-- Lot of other results that can be used, like full address fields, categories and so on. -->
+<!-- You can restrict results based on country. -->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TomTom MapsAPI Ex2</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>TomTom MapsAPI - Tourist Spots</h1>
+    </div>
+
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <div class="col-md-8">
+               <h3 class="panel-title">Tourist Spot Finder</h3>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1">
+                  <span class="glyphicon glyphicon-map-marker" aria-hidden="true">
+                  </span>
+                </span>
+                <input type="text" class="form-control" placeholder="Golden Gate Bridge" aria-describedby="basic-addon1" id="searchbar">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <h4 id="search-title"></h4>
+          <p id="search-status">
+            Tourist spots will appear here...
+          </p>
+
+          <ul class="list-group" id="search-results">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $("#searchbar").keypress(function(event) {
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+
+        if(keycode == '13') {
+          query = $(this).val();
+          $("#search-title").html("Results for '" + query + "'");
+
+          $("#search-status").html("Please wait while tourist spots load...");
+          $(this).val("");
+
+          var li = '<li class="list-group-item"><span class="badge">{country}</span><h4 class="list-group-item-heading">{name}</h4><p class="list-group-item-text">{location}</p></li>';
+
+          var url = "https://api.tomtom.com/search/2/search/<tourist-spot>.json?idxSet=POI&key=dP6XZXXsfTHAHCmayhVgDmQ0EGFcz8Ua";
+          url = url.replace("<tourist-spot>", query);
+
+          $.ajax({
+            type: "GET",
+            url: url,
+            success: function (data) {
+              $("#search-results").html("")
+              $.each(data.results, function(i, item) {
+                var new_li = li.replace(
+                  "{name}",
+                  item.poi.name
+                );
+
+                new_li = new_li.replace(
+                  "{country}",
+                  item.address.countryCodeISO3
+                );
+
+                var latlon = item.position.lat + ", " + item.position.lon;
+                new_li = new_li.replace(
+                  "{location}",
+                  latlon
+                );
+
+                $("#search-results").append(new_li);
+              });
+
+              $("#search-status").html("");
+            },
+            dataType: "json"
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
